@@ -1,0 +1,216 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>JungHsu&#39;s Blog</title>
+
+  
+  <meta name="author" content="John Doe">
+  
+
+  
+
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="JungHsu&#39;s Blog"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="JungHsu&#39;s Blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">JungHsu&#39;s Blog</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">主页</a></li>
+      
+        <li><a href="/archives">归档</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2017/12/05/测试文章/"><span>测试文章</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/12/05/测试文章/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-12-05T09:53:40.000Z">
+          2017-12-05
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>大家好，一年多没有更新文章了，最大的原因我想是不知道该分享些什么，这次是在一个巧合下发现网上经常被人讨论的APP在线上状态如何检测到主线程的卡顿情况，我也稍微了解了一下，前段时间就在一个博主的文章里看到一篇有部分讲解这个问题的，据说美团用的也是这种方案，具体不得而知，然后我发现网上关于这种问题的实现方案都十分类似，如果屏幕前的你还没有意识过这个问题，那就请听我往下分析这个网上常用的检测方案:</p>
+<blockquote>
+<p>利用runloop的检测方案</p>
+</blockquote>
+<p>关于runloop是什么我就不多说了，因为网上有很多关于这个的文章，最推荐的还是YYKit的作者博客上那篇。<br>我要拿出来注意的是 runloop 的状态:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) &#123;</span><br><span class="line">    kCFRunLoopEntry         = (1UL &lt;&lt; 0), // 即将进入Loop</span><br><span class="line">    kCFRunLoopBeforeTimers  = (1UL &lt;&lt; 1), // 即将处理 Timer</span><br><span class="line">    kCFRunLoopBeforeSources = (1UL &lt;&lt; 2), // 即将处理 Source</span><br><span class="line">    kCFRunLoopBeforeWaiting = (1UL &lt;&lt; 5), // 即将进入休眠</span><br><span class="line">    kCFRunLoopAfterWaiting  = (1UL &lt;&lt; 6), // 刚从休眠中唤醒</span><br><span class="line">    kCFRunLoopExit          = (1UL &lt;&lt; 7), // 即将退出Loop</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>网上热议的是利用 kCFRunLoopBeforeSources 和 kCFRunLoopAfterWaiting 这两个状态之间的耗时进行判断是否有太多事件处理导致出现了卡顿，下面直接上代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">static void runLoopObserverCallBack(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info)</span><br><span class="line">&#123;</span><br><span class="line">    PingConfig *object = (__bridge PingConfig*)info;</span><br><span class="line">    </span><br><span class="line">    // 记录状态值</span><br><span class="line">    object-&gt;activity = activity;</span><br><span class="line"></span><br><span class="line">    // 发送信号</span><br><span class="line">    dispatch_semaphore_t semaphore = object-&gt;semaphore;</span><br><span class="line">    dispatch_semaphore_signal(semaphore);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上面这些是监听runloop的状态而写的回调函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">- (void)registerObserver</span><br><span class="line">&#123;</span><br><span class="line">    PingConfig *config = [PingConfig new];</span><br><span class="line">    // 创建信号</span><br><span class="line">    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);</span><br><span class="line">    config-&gt;semaphore = semaphore;</span><br><span class="line">    </span><br><span class="line">    CFRunLoopObserverContext context = &#123;0,(__bridge void*)config,NULL,NULL&#125;;</span><br><span class="line">    CFRunLoopObserverRef observer = CFRunLoopObserverCreate(kCFAllocatorDefault,</span><br><span class="line">                                                            kCFRunLoopAllActivities,</span><br><span class="line">                                                            YES,</span><br><span class="line">                                                            0,</span><br><span class="line">                                                            &amp;runLoopObserverCallBack,</span><br><span class="line">                                                            &amp;context);</span><br><span class="line">    CFRunLoopAddObserver(CFRunLoopGetMain(), observer, kCFRunLoopCommonModes);</span><br><span class="line">    </span><br><span class="line">    __block uint8_t timeoutCount = 0;</span><br><span class="line"></span><br><span class="line">    // 在子线程监控时长</span><br><span class="line">    dispatch_async(dispatch_get_global_queue(0, 0), ^&#123;</span><br><span class="line"></span><br><span class="line">        </span><br><span class="line">        while (YES)</span><br><span class="line">        &#123;</span><br><span class="line">            // 假定连续5次超时50ms认为卡顿(当然也包含了单次超时250ms)</span><br><span class="line">            long st = dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, 50*NSEC_PER_MSEC));</span><br><span class="line"></span><br><span class="line">            if (st != 0)</span><br><span class="line">            &#123;</span><br><span class="line"></span><br><span class="line">//                NSLog(@&quot;循环中--%ld&quot;,config-&gt;activity);</span><br><span class="line">                if (config-&gt;activity==kCFRunLoopBeforeSources || config-&gt;activity==kCFRunLoopAfterWaiting)</span><br><span class="line">                &#123;</span><br><span class="line">                    if (++timeoutCount &lt; 5)&#123;</span><br><span class="line">                        continue;</span><br><span class="line">                    &#125;else&#123;</span><br><span class="line">                        NSLog(@&quot;卡顿了&quot;);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line"> </span><br><span class="line">            &#125;</span><br><span class="line">            timeoutCount = 0;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在我解读一下这段代码:</p>
+<ol>
+<li>PingConfig 只是我随便写的一个用来存储runloop的状态和信号量的自定义类，其中的结构如下:<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@interface PingConfig : NSObject</span><br><span class="line">&#123;</span><br><span class="line">    @public</span><br><span class="line">    CFRunLoopActivity activity;</span><br><span class="line">    dispatch_semaphore_t semaphore;</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>恩，只有这么多足矣。</p>
+<ol>
+<li>APP启动时我可以进入 registerObserver 方法，其中首先我创建一个记录信息的类PingConfig实例，然后创建一个信号，并且保存在这个PingConfig实例中(其实只是为了方便拿到)。</li>
+<li>接下来我创建了一个观察者监测主线程的 runloop,它会在主线程runloop状态切换时进行回调。</li>
+<li>开启一个子线程，并且在里面进行一个 while 循环，在 循环的开始处 wait 一个信号量，并且设置超时为 50毫秒，失败后会返回一个非0数，成功将会返回0，这时候线程会阻塞住等待一个信号的发出。</li>
+<li>如果runloop状态正常切换，那么就会进入回调函数，在回调函数中我们发出一个信号，并且记录当前状态到PingConfig实例中，下面的判断语句中发现为0，timeoutCount自动置为0，一切正常。</li>
+<li>当主线程出现卡顿，while循环中的信号量再次等待，但是回调函数没有触发，从而导致等待超时，返回一个非0数，进入判断句后，我们再次判断状态是否处于 kCFRunLoopBeforeSources 或 kCFRunLoopAfterWaiting，如果成立，timeoutCount+1。</li>
+<li>持续五次runloop不切换状态，说明runloop正在处理某个棘手的事件无法休息且不更新状态，这样while循环中的信号量超时会一直发生，超过五次后我们将断定主线程的卡顿并上传堆栈信息。</li>
+</ol>
+<p>经过测试，的确可以检测到主线程的卡顿现象，不得不佩服大佬们的方案。<br>但是在一次测试中，发现当主线程卡在界面尚未完全显示前，这个方案就检测不出来卡顿了，比如我将下面的代码放在B控制器中:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">dispatch_semaphore_t t = dispatch_semaphore_create(0);</span><br><span class="line">dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^&#123;</span><br><span class="line">    NSLog(@&quot;----&quot;);</span><br><span class="line">    dispatch_semaphore_signal(t);</span><br><span class="line">&#125;);</span><br><span class="line">dispatch_semaphore_wait(t, DISPATCH_TIME_FOREVER);</span><br></pre></td></tr></table></figure></p>
+<p>上面是一段有问题的代码，将导致主线程的持续堵塞，如果我们在这段代码放在B控制器的ViewDidLoad方法中(ViewWillAppear同样)，这样运行后，当你希望push到B控制器时，项目将在上一个界面完全卡住，并且无法用上面的方案检测到，而且CPU及内存都显示正常:</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1336067-12058a76334f6d36.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="QQ20170930-153549@2x.png"></p>
+<p>具体原因我想了一下，由于runloop在处理完source0或者source1后，比如界面的跳转也是执行了方法，具体有没有用到source0这不重要，但是后面会紧接着进入准备睡眠(kCFRunLoopBeforeWaiting)的状态，然而此时线程的阻塞导致runloop的状态也被卡住无法切换，这样也就导致在那段检测代码中无法进入条件，从而检测不出来。<br>但是话说回来，APP在静止状态(保持休眠)和刚刚那种卡死状态都会使runloop维持在 kCFRunLoopBeforeWaiting状态，这样我们就无法在那段代码中增加判断来修复，因为无法知道到底是真的静止没有操作还是被阻塞住，我也没找到线程的阻塞状态属性，如果你发现这个属性，那么就可以使用那个属性来判断。但是我也得说下在没找到那个属性时我的检测方案：</p>
+<blockquote>
+<p>我的检测方案</p>
+</blockquote>
+<p>先上代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">dispatch_queue_t serialQueue = dispatch_queue_create(&quot;serial&quot;, DISPATCH_QUEUE_SERIAL);</span><br><span class="line">self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, serialQueue);</span><br><span class="line">dispatch_source_set_timer(self.timer, DISPATCH_TIME_NOW, 0.25 * NSEC_PER_SEC, 0);</span><br><span class="line"></span><br><span class="line">__block int8_t chokeCount = 0;</span><br><span class="line">dispatch_semaphore_t t2 = dispatch_semaphore_create(0);</span><br><span class="line">dispatch_source_set_event_handler(self.timer, ^&#123;</span><br><span class="line">    if (config-&gt;activity == kCFRunLoopBeforeWaiting) &#123;</span><br><span class="line">        static BOOL ex = YES;</span><br><span class="line">        if (ex == NO) &#123;</span><br><span class="line">            chokeCount ++;</span><br><span class="line">            if (chokeCount &gt; 40) &#123;</span><br><span class="line">                NSLog(@&quot;差不多卡死了&quot;);</span><br><span class="line">                dispatch_suspend(self.timer);</span><br><span class="line">                return ;</span><br><span class="line">            &#125;</span><br><span class="line">            NSLog(@&quot;卡顿了&quot;);</span><br><span class="line">            return ;</span><br><span class="line">        &#125;</span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</span><br><span class="line">            ex = YES;</span><br><span class="line">            dispatch_semaphore_signal(t2);</span><br><span class="line">        &#125;);</span><br><span class="line">        BOOL su = dispatch_semaphore_wait(t2, dispatch_time(DISPATCH_TIME_NOW, 50*NSEC_PER_MSEC));</span><br><span class="line">        if (su != 0) &#123;</span><br><span class="line">            ex = NO;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line">dispatch_resume(self.timer);</span><br></pre></td></tr></table></figure></p>
+<p>解释一下我的方案:</p>
+<ol>
+<li>开启一个异步队列，并且创建一个定时器，时间我设置的是0.25秒，具体时间随你自己，这个时间是用来检测卡死的持续时间。</li>
+<li>在定时器外面我也同样创建了一个用来同步的信号量，这个不解释了，不会的就去看一下信号量的使用方式。进入定时器的回调后，我设置了一个静态变量来记录主队列是否执行完成。</li>
+<li>我们判断当前runloop的状态是否为kCFRunLoopBeforeWaiting，所以这个方案是用来弥补前面那个方案，如果主线程此时没有阻塞住，我们在这里向main Queue抛一个block，看它是否能够成功执行，如果成功执行，说明主线程没有阻塞住，如果已经被阻塞住，那我抛过去的block是肯定不会被执行的。</li>
+<li>下面的代码就是一些辅助操作，当信号量超过50毫秒，抛给主线程的block没有执行，那么说明此时就有一些阻塞了，返回一个非0数，并设置 ex为NO，从而在下一次定时器回调到来时进行上报。</li>
+</ol>
+<p>我写的这段解决方案中的示例代码只是用来演示，具体是原理可以大家尽情在此基础上优化，目前在我的项目中可以正常检测到之前那种阻塞造成的APP卡死现象，如果你发现有更好的检测方案，希望能告诉我，谢谢！</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2017/12/05/hello-world/"><span>Hello World</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/12/05/hello-world/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-12-05T09:46:07.000Z">
+          2017-12-05
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+
+<nav class="pagination">
+  
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2017 John Doe
+    
+  </p>
+</footer>
+    
+  </div>
+</div>
+</body>
+</html>
