@@ -1,0 +1,214 @@
+<!DOCTYPE HTML>
+<html>
+
+<script type="text/javascript">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?e934621e421f2f511898da3e7eeace41";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>稍微了解地址无关代码(Position-Independent Code) | JungHsu&#39;s Blog</title>
+
+  
+  <meta name="author" content="John Doe">
+  
+
+  
+  <meta name="description" content="地址无关代码(或者说位置独立代码)测试环境
+CPU类型: X86-64 系统环境:CentOS Linux7 工具: GCC
+
+0x1 何为地址无关代码地址无关代码，简称PIC，下文中都以PIC代替。
+PIC一般用于动态库文件中，但并不是唯一，所以有时候也会用在可执行文件中。我想大家都知道静态库与动">
+  
+
+  
+  
+  <meta name="keywords" content="">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="稍微了解地址无关代码(Position-Independent Code)"/>
+
+  <meta property="og:site_name" content="JungHsu&#39;s Blog"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="JungHsu&#39;s Blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">JungHsu&#39;s Blog</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">主页</a></li>
+      
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>稍微了解地址无关代码(Position-Independent Code)</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2018/05/23/稍微了解地址无关代码-Position-independent-Code/" rel="bookmark">
+        <time class="entry-date published" datetime="2018-05-23T14:44:28.000Z">
+          2018-05-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="地址无关代码-或者说位置独立代码"><a href="#地址无关代码-或者说位置独立代码" class="headerlink" title="地址无关代码(或者说位置独立代码)"></a>地址无关代码(或者说位置独立代码)</h2><h3 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h3><blockquote>
+<p>CPU类型: X86-64 系统环境:CentOS Linux7 工具: GCC</p>
+</blockquote>
+<h2 id="0x1-何为地址无关代码"><a href="#0x1-何为地址无关代码" class="headerlink" title="0x1 何为地址无关代码"></a>0x1 何为地址无关代码</h2><p>地址无关代码，简称PIC，下文中都以PIC代替。</p>
+<p>PIC一般用于动态库文件中，但并不是唯一，所以有时候也会用在可执行文件中。我想大家都知道静态库与动态库的区别，如果没有，我再稍微啰嗦一下:</p>
+<ul>
+<li>静态库</li>
+</ul>
+<p>在代码编译后，链接时对需要的库文件进行静态链接，也就是在生成可执行文件时，对每一份静态库文件都拷贝了一份到可执行文件中。</p>
+<ul>
+<li>动态库</li>
+</ul>
+<p>在代码编译链接生成可执行文件后，装载它到虚拟内存中后，这时候才对动态库进行链接装载，也可能在运行时才进行，它并非合并在可执行文件中。</p>
+<p>关于动态库的好处在下不会多说，因为这并非本文的重点。</p>
+<p>由于动态库文件在磁盘中只存在一份，而为了当被装载到多个进程中时能保证可用，必须绝对不能使用绝对地址进行定位，为什么这么说呢？因为动态库要保证可以被加载进任意地址空间，所以开始地址都是未知的，动态库内部的指令和数据都根本不知道绝对地址会是何处。当然也有人说，可以固定某个区地址区域划分给动态库啊，的确，当只有一个可执行文件需要链接这个动态库时，固定地址是可以解决这个问题的，或者说重定位就可以完成这个需求。但是发明动态库的目的之一就是为了让所有程序在装载或运行时都能使用，而不是单独一个进程使用，所以这是个无聊的说辞。</p>
+<p>因为指令中不允许使用绝对地址，所以就产生了“地址无关代码(PIC)”的解决方案，简而言之就是指令中不会使用任何的绝对地址。至于如何做到不使用绝对地址，下文会详细说道。</p>
+<h2 id="0x2-PIC的实现手段"><a href="#0x2-PIC的实现手段" class="headerlink" title="0x2 PIC的实现手段"></a>0x2 PIC的实现手段</h2><p>由于PIC的做法是让指令部分做到地址无关，所以可以让所有进程共享一份。但是数据部分并不地址无关，而是让所有进程在地址空间中都产生一份副本。</p>
+<p>所以目标就是就是实现指令部分的无关，而指令中可能会包含对内部和外部的函数调用，以及内部和外部的数据访问。所以这样的划分就需要考虑四种情况:</p>
+<p>这里是测试代码，作为下面讨论用:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line"></span><br><span class="line">static int a;</span><br><span class="line">extern int b;</span><br><span class="line">extern void play();</span><br><span class="line"></span><br><span class="line"> void change()&#123;</span><br><span class="line">	a = 1;</span><br><span class="line">	b = 2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static void change2()&#123;</span><br><span class="line">      a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void execute()&#123;</span><br><span class="line">	change();</span><br><span class="line">	play();</span><br><span class="line">	change2();</span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line">我们需要对代码文件进行编译，并通过设置将其生成一个共享对象文件</span><br><span class="line">gcc -fPIC -shared -o lib.so lib.c</span><br></pre></td></tr></table></figure></p>
+<h3 id="0x21-对内部函数的访问"><a href="#0x21-对内部函数的访问" class="headerlink" title="0x21 对内部函数的访问"></a>0x21 对内部函数的访问</h3><p>相对的内部函数其实也有两种情况，有static修饰的 真●内部函数 和 没有static修饰的全局函数。</p>
+<ul>
+<li>真●内部函数(static)</li>
+</ul>
+<p>比如上述代码中的change2，对这种函数的访问是最容易解决的问题，因为一个动态库在编译成一个模块之后，其中的指令之间的相对位置是固定的，所以通过一个相对跳转指令即可访问:<br><img src="https://ws2.sinaimg.cn/large/006tKfTcly1fq6w66pyxuj30v80kaaer.jpg" alt=""></p>
+<ul>
+<li>全局函数</li>
+</ul>
+<p>因为为全局函数，所以要考虑一个叫做全局符号介入的问题，什么是全局符号介入呢？</p>
+<p>在Linux下，当动态链接器加载一个模块时，需要将这个模块的符号加入到全局符号表中，如果某个要加入的符号名已经存在时，也就是此时重复了，这时候会忽略这次的添加操作，以第一次决议的符号为准，未来运行期间访问到这个符号的所有指令，都会使用第一次决议的符号，这时候情况和下面的外部函数情况相同。</p>
+<h3 id="0x22-对内部数据的访问"><a href="#0x22-对内部数据的访问" class="headerlink" title="0x22 对内部数据的访问"></a>0x22 对内部数据的访问</h3><p>在上面的测试代码中，change和change2函数中都对静态变量a进行了操作，我们来看翻译成汇编后的显示:<br><img src="https://ws3.sinaimg.cn/large/006tKfTcly1fqethsu2tsj31jq0i2q7i.jpg" alt=""></p>
+<p>首先我要做一些说明，由于数据的寻址方式并没有相对寻址，所以无法像上述方式一样通过相对寻址拿到那个变量的地址。不过由于在一个共享文件中，每条指令与它内部的变量相对地址是固定的，所以可以通过当前“PC”寄存器的值加上固定的偏移量拿到需要的变量，在x86-64平台的汇编中用%rip寄存器代替熟知的PC寄存器。</p>
+<p>从图中第一个红框中可以看出，当前%rip寄存器保存的是下一条指令的地址”0x753”(因为这是个相对地址，所以用引号扩住)，并且地址加上了0x2008e9,我们可以计算一下这个a对于整个共享文件的相对地址:<br>0x753 + 0x2008e9 = 0x20103c</p>
+<p>这个地址也正好对应了后面注释中的a的地址。</p>
+<h3 id="0x23-对外部数据的访问"><a href="#0x23-对外部数据的访问" class="headerlink" title="0x23 对外部数据的访问"></a>0x23 对外部数据的访问</h3><p>对于外部数据的访问，是通过一个GOT表，此表位于数据段中，所以此表的地址可以利用上面的“对内部数据的访问”方式得到，并且由于位于数据段中，因此拥有可修改的特性。GOT表中的每一项就是对外数据的引用，在未加载到进程空间中，表项都为空，需要在加载时进行填充，那装载器如何知道要填充哪些数据呢？答案是通过动态链接时的重定位表，可以用 objdump -R #file 指令来获取：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tKfTcly1frlma3z17wj30n80ec78h.jpg" alt=""></p>
+<blockquote>
+<p>因为这篇文章中间由于忙别的事隔了很长时间才接着写，系统也被我重装了，所以后面的截图可能颜色主题风格不一样，不用在意。</p>
+</blockquote>
+<p>可以看到表中被匡住的那一项为我们代码中引用的外部符号b，此时它在重定位表中的偏移为0x200fd8.</p>
+<p>我们也看下got表的位置:</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tKfTcly1frlmrcd9vvj30u40ssgsv.jpg" alt=""></p>
+<p>这时候再看反汇编后的代码:<br><img src="https://ws1.sinaimg.cn/large/006tKfTcly1frlmdpgs8hj30vg07gmyo.jpg" alt=""></p>
+<p>可得 0x74a + 0x20088e = 0x200fd8，发现此处偏移量与重定位表b的那一项的偏移量完全一样，因为在got表中八个字节为一项，可以看出b位于第二项。于是在加载到进程空间后，加载器会对符号重定位后得到的地址填充至got表中，当我们再次访问0x200fd8偏移量时，就能得到变量的真正地址。</p>
+<h3 id="0x24-对外部函数的访问"><a href="#0x24-对外部函数的访问" class="headerlink" title="0x24 对外部函数的访问"></a>0x24 对外部函数的访问</h3><p>对外部函数的访问和上面的“对外部数据的访问”类似，原理都一样的，所以多余的计算偏移步骤我就省略了。不同之处是这里的表叫做plt表，偏移位置可以看图:</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tKfTcly1frlmxgfnbyj30u203474q.jpg" alt=""></p>
+<p>不同之处在于其有一个懒式绑定的特点，因为程序启动时需要将所有共享模块加载到进程空间中，此时需要进行动态绑定的符号会非常多，重定位也是耗费性能的，这样也会导致程序的启动时间过长；而且有的函数不一定在运行过程中会调用，所以为了节省性能消耗，采用用时才进行绑定的办法，也就是用的时候再进行符号重定位，动态链接器会接收共享模块ID和需要被重定位的符号作为参数，再通过内部的功能对其plt表项进行填充，此时再次访问plt表项中所对应的地址就可以进行外部函数的调用了。</p>
+<h2 id="0x3-感想"><a href="#0x3-感想" class="headerlink" title="0x3 感想"></a>0x3 感想</h2><p>其实上面的模块之外的数据和函数访问的解决方案，在各种程序编码中经常遇到，在我看来有点类似于反射。这种方案可以很好的实现大部分程序的动态特性，让程序更加的灵活。</p>
+<p>大概就写这么多，唠唠叨叨太多也是鸡肋。笔者水平有限，如果错误之处希望大家能够指正，感谢阅读！</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+	<section id="comments" class="comment">
+	  <div id="disqus_thread">
+	  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+	  </div>
+	</section>
+
+	<script type="text/javascript">
+	var disqus_shortname = 'junghsublog';
+	(function(){
+	  var dsq = document.createElement('script');
+	  dsq.type = 'text/javascript';
+	  dsq.async = true;
+	  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	}());
+	(function(){
+	  var dsq = document.createElement('script');
+	  dsq.type = 'text/javascript';
+	  dsq.async = true;
+	  dsq.src = '//' + disqus_shortname + '.disqus.com/count.js';
+	  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	}());
+	</script>
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2018 John Doe
+    
+  </p>
+</footer>
+    
+  </div>
+</div>
+</body>
+</html>
