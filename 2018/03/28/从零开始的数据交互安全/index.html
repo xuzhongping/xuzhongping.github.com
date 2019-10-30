@@ -1,0 +1,242 @@
+<!DOCTYPE HTML>
+<html>
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?8f05bcb8ec0a9569fe0e42e42cdcd923";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?e934621e421f2f511898da3e7eeace41";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>从零开始的数据交互安全 | JungHsu&#39;s Blog</title>
+
+  
+  <meta name="author" content="John Doe">
+  
+
+  
+  <meta name="description" content="从零开始的数据交互安全数据交换时为何要考虑安全？在我们中华悠久历史中，其实早已有很多数据交互的安全的范例。
+
+《六韬·龙韬·阴符》 摘自百科
+
+相传商纣王末年，姜太公辅佐周室，使周族由弱变强。有一次，他们带领的周军指挥大营被叛兵包围，情况危急，姜太公令信使突围，回朝搬兵，他怕信使遗忘机密，又怕周文王">
+  
+
+  
+  
+  <meta name="keywords" content="">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="从零开始的数据交互安全"/>
+
+  <meta property="og:site_name" content="JungHsu&#39;s Blog"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="JungHsu&#39;s Blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">JungHsu&#39;s Blog</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">主页</a></li>
+      
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>从零开始的数据交互安全</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2018/03/28/从零开始的数据交互安全/" rel="bookmark">
+        <time class="entry-date published" datetime="2018-03-28T08:51:54.000Z">
+          2018-03-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p><img src="https://ws1.sinaimg.cn/large/006tNc79ly1fpsmn4eexuj31100hsngm.jpg" alt=""></p>
+<h2 id="从零开始的数据交互安全"><a href="#从零开始的数据交互安全" class="headerlink" title="从零开始的数据交互安全"></a>从零开始的数据交互安全</h2><h3 id="数据交换时为何要考虑安全？"><a href="#数据交换时为何要考虑安全？" class="headerlink" title="数据交换时为何要考虑安全？"></a>数据交换时为何要考虑安全？</h3><p>在我们中华悠久历史中，其实早已有很多数据交互的安全的范例。</p>
+<ul>
+<li>《六韬·龙韬·阴符》 摘自百科</li>
+</ul>
+<p>相传商纣王末年，姜太公辅佐周室，使周族由弱变强。有一次，他们带领的周军指挥大营被叛兵包围，情况危急，姜太公令信使突围，回朝搬兵，他怕信使遗忘机密，又怕周文王不认识信使，耽误军务大事，就将自己珍爱的鱼竿折成数节，每节长短不一，各代表一件军机，令信使牢记，不得外传。信使几经周折回到朝中，周文王令左右将几节鱼竿合在一起，亲自检验，周文王辨认出是姜太公的心爱之物，亲率大军到事发地点，解了姜太公之危。事后，姜太公拿着那几节使他化险为夷，转危为安的鱼竿，妙思如泉涌，他将鱼竿传信的办法加以改进，便发明了“阴符”。</p>
+<ul>
+<li>藏头诗</li>
+</ul>
+<p>除了在古代军事上，其实民间也充满了各种数据交换安全的范例，“藏头诗”便是最令人熟知的一种体现。</p>
+<blockquote>
+<p>平湖一色万顷秋，</p>
+<p>湖光渺渺水长流。</p>
+<p>秋月圆圆世间少，</p>
+<p>月好四时最宜秋。</p>
+</blockquote>
+<p>这首诗的首字连起来便是明朝大学问家徐渭游西湖时面对“平湖秋月”盛景时写出的。</p>
+<p>由上可见，当人们不想让自己希望知道的人以外任何人知道时，就是安全设计的用武之地了。所以说数据交换的安全是个非常有用的技术，不露声色的影响着我们的生活。</p>
+<h3 id="如何才能做到数据的安全交互呢？"><a href="#如何才能做到数据的安全交互呢？" class="headerlink" title="如何才能做到数据的安全交互呢？"></a>如何才能做到数据的安全交互呢？</h3><p>不管是古代还是现代，数据的安全不外乎三个方面:</p>
+<ul>
+<li><p>数据内容的安全性</p>
+</li>
+<li><p>数据内容的完整性</p>
+</li>
+<li><p>交换双方的身份真假</p>
+</li>
+</ul>
+<p>如果保证了这三个方面的正确无误，我们就可以说做到了数据交换的安全。</p>
+<p>接下来可以详细说说这三个方面:</p>
+<h4 id="1-数据内容的安全性"><a href="#1-数据内容的安全性" class="headerlink" title="1. 数据内容的安全性"></a>1. 数据内容的安全性</h4><p>这是数据交互安全设计的首要任务，不然还谈何交换。</p>
+<p>其实前面所说的典故，类似于现代加密方式中的对称加密方式。</p>
+<blockquote>
+<p>Q: 何为对称加密呢？</p>
+</blockquote>
+<p>A: 啥？连对称加密都不知道，自个看书去！</p>
+<blockquote>
+<p>Q: 除了对称加密还有什么加密呢?</p>
+</blockquote>
+<p>A: 还有公私钥方式的加密方式。</p>
+<blockquote>
+<p>Q: 那何为公私钥加密呢?</p>
+</blockquote>
+<p>A:  ……</p>
+<p>简单来说公私钥加密方式就是:</p>
+<p>486要给艾米莉亚碳发送一段数据n，但是不想被蕾姆知道，艾米莉亚自己有两个密钥，一个叫公钥，这个密钥是任何人都知道的，就像认识艾米莉亚的人都知道她的名字，还有一个是私钥，只有艾米莉亚自己知道。镇子上还存在一个加密的算法，大家都知道，然后486用艾米莉亚的公钥和这个公开的加密算法来加密数据n，发给了艾米莉亚，艾米莉亚收到之后，便用自己的私钥和加密算法来加密刚刚收到的密文，这时候得到了便是原始的数据n。</p>
+<blockquote>
+<p>公私钥的加密顺序也是完全可以反着来的，比如说私钥加密，公钥来解密。</p>
+</blockquote>
+<p>读到这里大家应该都知道这两种加密方式了，当然加密算法的选择多种多样，但是有一点必须保证的就是可逆。</p>
+<p>这些便是保证数据内容的安全性方式。</p>
+<h4 id="2-数据内容的完整性"><a href="#2-数据内容的完整性" class="headerlink" title="2. 数据内容的完整性"></a>2. 数据内容的完整性</h4><p>完整性嘛，就是说得保证传过去的数据没有被人篡改，继续开始:</p>
+<p>刚刚486要和艾米莉亚互传数据n了，但是如何保证n传输过程中没有被人改动呢？ 当然有办法，首先，486和艾米莉亚可以互相持有一段密钥，这个密钥非常简单，可以是一个非常小的比特串s，然后还得有个散列函数H，这个散列函数H保证以下规则:</p>
+<blockquote>
+<p>找到任意两个不同的数据x和y，使得H(x) = H(y) 是不可能的。</p>
+</blockquote>
+<p>现在准备工作就做好了，现在486可以将数据n和密钥s进行一些简单的运算(比如按位运算)，然后再将这个运算结果用散列函数H计算，得到一个m码，这时候呢，就把数据n和m码一起发给艾米莉亚。</p>
+<p>艾米理由收到数据后呢，也就是收到了数据n和m码，这时候她可以也将n和共享的密钥s进行运算，再将这个运算结果用散列函数H计算，得到结果，看看这个结果和m码是否相同，如果相同，就代表数据没有中途被篡改了。</p>
+<h4 id="3-交换双方的身份真假"><a href="#3-交换双方的身份真假" class="headerlink" title="3. 交换双方的身份真假"></a>3. 交换双方的身份真假</h4><p>其实从上面说的完整性方案也是顺便鉴定了交换双方的身份真假，因为如果有人冒充486，那艾米莉亚接收到数据后，计算出来的m码肯定是和收到的不一样的。不过我们在这里单独将身份真假鉴别来讲一讲。</p>
+<p>486给艾米莉亚写了一封告白信，但是艾米莉亚不知道是谁写的，刚刚前面说了公私钥加密方式，于是486将用私钥加密这个告白信，然后艾米莉亚肯定知道486的公钥，于是用486的公钥来加密收到的密文，如果得到结果正是这个告白信，那就说明这个告白信确实是486写的。</p>
+<p>说到这里，其实这样就基本形成了一个数据安全交换的流程。虽然肯定是不太成熟的，但是提供了一个整体的思路。</p>
+<h3 id="数据交换安全的用途"><a href="#数据交换安全的用途" class="headerlink" title="数据交换安全的用途"></a>数据交换安全的用途</h3><p>现在来看现代网络信息交互中，几乎无时无刻充满着安全的要求，比如说HTTPS就是最重要的体现。这些安全措施维护着我们的隐私信息安全不被泄露，让我们能更加放心的网上冲浪。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79ly1fpsml61ji7j30vo0ss7wh.jpg" alt=""></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+	<section id="comments" class="comment">
+	  <div id="disqus_thread">
+	  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+	  </div>
+	</section>
+
+	<script type="text/javascript">
+	var disqus_shortname = 'junghsublog';
+	(function(){
+	  var dsq = document.createElement('script');
+	  dsq.type = 'text/javascript';
+	  dsq.async = true;
+	  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	}());
+	(function(){
+	  var dsq = document.createElement('script');
+	  dsq.type = 'text/javascript';
+	  dsq.async = true;
+	  dsq.src = '//' + disqus_shortname + '.disqus.com/count.js';
+	  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	}());
+	</script>
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2019 John Doe
+    
+  </p>
+</footer>
+    
+  </div>
+</div>
+</body>
+</html>

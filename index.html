@@ -1,0 +1,769 @@
+<!DOCTYPE HTML>
+<html>
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?8f05bcb8ec0a9569fe0e42e42cdcd923";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?e934621e421f2f511898da3e7eeace41";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>JungHsu&#39;s Blog</title>
+
+  
+  <meta name="author" content="John Doe">
+  
+
+  
+
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="JungHsu&#39;s Blog"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="JungHsu&#39;s Blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">JungHsu&#39;s Blog</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">主页</a></li>
+      
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2019/10/03/网络学习笔记-TCP/"><span>网络学习笔记-TCP</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2019/10/03/网络学习笔记-TCP/" rel="bookmark">
+        <time class="entry-date published" datetime="2019-10-03T05:23:46.000Z">
+          2019-10-03
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是一篇关于TCP作为传输层协议所要面临的种种问题的介绍文章，如果你对TCP的流程还是一知半解，希望这篇文章能够让你有所收获。</p>
+<h1 id="传输层"><a href="#传输层" class="headerlink" title="传输层"></a>传输层</h1><p>在我们平时工作学习中，网络协议栈模型不管是OSI的七层、TCP/IP的四层还是一些计算机网络书籍中的五层，传输层所承担的角色都是比较统一的：它承担着上层的数据流到达后，逐一将它们和来源的端口号一一对应，然后经过一些处理，交给网络层进行传输；在数据从网络层交过来时，经过一些处理，然后通过数据报文段的端口号字段一一的交付给对应的进程。这是传输层最基本的功能，往往我们称这两种行为叫做多路复用和多路分解。</p>
+<ul>
+<li>引用《计算机网络自顶向下》中的比喻，想象两个拥有多个孩子的家庭A和B，两家孩子之间需要写信进行通讯。A家的孩子们写完信后，其中一个孩子将所有的信件收集起来，然后出门交给邮递员，此时这个负责收集信件的孩子所做的工作就好比是多路复用。然后信件到了B家那边，B家也有一个孩子负责收信，邮递员将所有信件交给他，他回到家中按照信封上的收件人姓名对应发给自己的兄弟姐妹，于是他的行为可以认为是多路分解。</li>
+<li>计算机世界的很多设计，都是来源于生活中的事物。</li>
+</ul>
+<p>上面说的是我们的传输层至少要做的工作，而我们目前网络世界中，比较经典常见的传输层协议，有UDP和TCP两种。这两种协议被人们介绍时，一般都会定义为不可靠的协议和可靠的传输层协议。那么何为不可靠又何为可靠呢？</p>
+<p>“可靠”这个词，说实话我不知道该如何定义，因为它没有完全“可靠”。比如说TCP它作为传输层的可靠性是保证发送方和接收方通信时数据的原始性。而并没有顾虑非常多的安全性考虑。而且在网络协议栈的设计中，并不是说只靠传输层来保证通信的可靠和不可靠，比如下面的网络层，也可以利用IPsc来保证一定的可靠性。而传输层本身的可靠性设计，是默认以为下层传过来的数据是没有可靠性而言的，是纯粹的不知道是啥的东西。下面暂时简述一下TCP和UDP的是否可靠的区分。</p>
+<h2 id="UDP"><a href="#UDP" class="headerlink" title="UDP"></a>UDP</h2><p>一个协议能够提供的功能，往往都是反映在报文的字段上，我们看看UDP的报文段格式:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky7if3ssj30k2098wfx.jpg" alt=""></p>
+<p>我们可以看到UDP作为传输层协议之一，其只拥有两个功能:</p>
+<ul>
+<li>多路复用和多路分解</li>
+</ul>
+<p>第一个功能也就是开头所说的多路复用和多路分解，这是必须要支持的基本功能。</p>
+<ul>
+<li>检验和</li>
+</ul>
+<p>这个功能保证了一个UDP包内的数据的原始性，保证其没有被修改，其中实现也比较简单：对承载的数据按照16比特为单位进行相加，将得到的和进行反码运算得到检验和。注意，这里只是能够判断是否出错，但是UDP并没有提供纠错功能，而TCP提供了。</p>
+<h2 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h2><p>先看TCP的报文段:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky7aozyyj30pa0leq3z.jpg" alt=""></p>
+<ul>
+<li>连接状态的维护</li>
+</ul>
+<p>维护发收双方的状态。</p>
+<ul>
+<li>检验和</li>
+</ul>
+<p>和UDP一样。</p>
+<ul>
+<li>包的序号</li>
+</ul>
+<p>解决包的顺序错乱问题，保证发出去的顺序和收到的顺序是一样，才能组合成原始数据。</p>
+<ul>
+<li>包的确认</li>
+</ul>
+<p>验证包是否被成功接收。</p>
+<ul>
+<li>接收窗口</li>
+</ul>
+<p>防止发的太快导致接收方的缓冲区溢出导致丢包。</p>
+<ul>
+<li>慢启动、拥塞避免、快速恢复</li>
+</ul>
+<p>防止网络中拥堵自己不知道已经堵了，还使劲发导致网络越来越堵。</p>
+<h1 id="传输层的可靠性"><a href="#传输层的可靠性" class="headerlink" title="传输层的可靠性"></a>传输层的可靠性</h1><p>在上文中我们看到了TCP协议和UDP协议的区别，从而也能知道其中的可靠性有以下几个方面:</p>
+<ul>
+<li>包的数据正确性</li>
+<li>丢包</li>
+<li>包的顺序</li>
+<li>接收方跟不上发送方的速度</li>
+<li>网络发生拥塞</li>
+<li>双方状态不可知</li>
+</ul>
+<p>这几个方面使得TCP协议成为当下最热门的可靠传输层协议。所以如果我们想更加深入的理解学习TCP，应该专门对这几个方面进行探索，甚至创造出一个比TCP更好的传输层可靠协议。这有点夸张，说现实一点，我们如果了解了如何解决这几个方面的问题，可以针对性的在应用层上基于UDP来设计出适合我们的应用环境的通信协议，那岂不美哉。</p>
+<ul>
+<li>下面关于各个问题的讨论，我会先介绍简单的解决方案，然后再引出实际环境的更复杂一些的做法。</li>
+</ul>
+<h2 id="包的数据正确性"><a href="#包的数据正确性" class="headerlink" title="包的数据正确性"></a>包的数据正确性</h2><p>对于包的正确性，也就是保证内容的原始没有被更改，可以像TCP那样，对包内数据进行计算得到一个检验值。发送方在发送时对检验值字段进行填充，接收方在收到之后进行同样运算，判断得到的结果和传过去的检验值是否相同，如果相同就接收并处理后放到缓冲区，并返回一个确认信息给发送方，告诉发送方刚收到的数据没问题；如果不同说明出了错，我们给发送方返回一个发生错误的信息，发送方知道刚发的有问题，那就重发一个过来。</p>
+<p>通过一个图片来反映这个过程:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky58v6hjj30ok0paq4i.jpg" alt="">)</p>
+<p>在实际环境中，由于传输层协议很少会采用停等类协议，而是使用流水线类型的协议，所以要比上面要复杂一些。由于大部分协议实现中接收方会同时接收到多个数据包，如果其中一个发生错误，接收方会再次将上一个正确接收且顺序正确的包的ACK号返回，从而触发发送方的丢包机制让其重发后面的包。</p>
+<ul>
+<li>停等协议和流水线协议: 发送方发送一次数据，直到收到接收方响应或者超时，才进行下一轮操作，此为停等协议；相对的流水线协议是不需要等待接收方的确认的，它可以马上发送新的包，其中它能同时发送的包的数量和下面说的流量控制和拥塞控制有关。停等协议会导致请求响应过慢，且网络吞吐量很低浪费资源。</li>
+</ul>
+<h2 id="丢包"><a href="#丢包" class="headerlink" title="丢包"></a>丢包</h2><p>丢包这个词，顾名思义，就是发的数据丢了，那我们怎么判断它丢了呢？很简单，没收到不就丢了嘛，多久没收到算丢了呢？那包要是只是来得慢并没丢呢？这样就出现了疑问了，如果知道它是来的慢还是真丢了呢？答案是不用管，只要你在我的规定的时间里没来，我就当你丢了。就算后面又收到一个重复的包也没事，不接就行。</p>
+<p>过程如图:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky5u638tj30o80oa0u3.jpg" alt=""></p>
+<p>前面稍微引出了丢包重发机制，这里详细解释一下。在大部分TCP实现中，往往通过序号和确认号来进行包顺序的管理，发送方在发送的包的首部里会以当前字节偏移量作为序号，而接收方返回的包中，确认号(ACK号)对应着期望能收到的下一个包的序号。</p>
+<p>考虑一个实际情况：接收方接收到3个包，每个包大小都是100个字节，接收到的序号是 0、100、200，此时接收方返回三个包进行确认，但是前两个确认包都丢失，只有一个ACK为201的包到达发送方，这时候发送方并不会重发前面两个包，因为到达的ACK号表示这前面序号的所有包都正确接收了；如果刚刚接收方收的三个包中，第二个序号为100的包真的丢失了，导致接收方没有收到呢，这个情况下，接收方在收到序号为200的包时，就会再次重发上次成功的ACK包给发送方，发送方一旦三次收到同样的ACK确认包，就会马上重发这个ACK号后面的所有包，且忽略定时器是否超时，这种机制被称为快速重传。</p>
+<p>这里给出TCP接收方返回ACK时的各种场景:</p>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>TCP接收方动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当期望的正确序号报文段到达，且前面所有的序号报文都已被确认</td>
+<td>最多等待500ms，如果下一个正确序号的报文没有到达，则发送当前最新的ACK号</td>
+<td></td>
+</tr>
+<tr>
+<td>当期望的正确序号报文段到达，而前面的序号报文段正在准备发送ACK</td>
+<td>立即发送刚刚到达的最新ACK，从而确认这两个报文段</td>
+<td></td>
+</tr>
+<tr>
+<td>比期望序号大的失序报文段到达，检测出间隔</td>
+<td>立即发送冗余ACK，指示最前面一个间隔的序号</td>
+<td></td>
+</tr>
+<tr>
+<td>能部分或完全填充间隔的报文段到达</td>
+<td>若该报文能填充到间隔的最前端，则立即发送ACK</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>这里还有一个比较重要的点，那就是超时时间的判定：</p>
+<ul>
+<li>超时时间</li>
+</ul>
+<p>在计算超时时间时，我们首先需要得到一个平均往返时间(EstimatedRTT)。在大部分TCP的实现中，会在某些时刻做一次”单次往返时间“的采样，我们称为SampleRTT,而我们所需EstimatedRTT通过一个公式得出:(EstimatedRTT会有一个初始值)</p>
+<pre><code>EstimatedRTT = (1 - ⍺) * EstimatedRTT + ⍺ * SampleRTT
+</code></pre><p>在[RFC 6298]中给出了⍺的参考值为0.125，所以公式可以变为:</p>
+<pre><code>EstimatedRTT = 0.875 * EstimatedRTT + 0.125 * SampleRTT
+</code></pre><p>除了估计平均RTT，还要测量RTT的变化偏差程度，我们用DevRTT表示，其计算公式为:</p>
+<pre><code>DevRTT = (1 - β) * DevRTT + β * |SampleRTT - EstimatedRTT| // β的推荐值为0.25
+</code></pre><p>最后超时时间TimeoutInterval的计算公式为:</p>
+<pre><code>TimeoutInterval = EstimatedRTT + 4 * DevRTT
+</code></pre><p>需要注意的是，这个超时时间会动态的更新，通过一定的策略重新测量SampleRTT，以保证在各种环境下的网络稳定传输。</p>
+<h2 id="包的顺序"><a href="#包的顺序" class="headerlink" title="包的顺序"></a>包的顺序</h2><p>发送方发送包的顺序，不一定和接收方接到的一样，因为其中有的包可能被延迟，所以这时候就得想办法解决接收到的包顺序是否正确，怎么解决呢？很简单，给每个包分个序号就行了。</p>
+<p>过程如图:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky65s97xj30oa0ns0un.jpg" alt=""><br>前面也大概提了TCP的序号机制：发送方通过发送序号为100的包，大小为50字节，接收方成功接收后返回一个ACK为151的包。需要注意的是，在大部分TCP实现中，虽然接收方可能接收到一些失序的包，但是其并不会马上丢弃，而是暂时缓存起来，等待间隔的包到来后进行重排。</p>
+<h2 id="接收方跟不上发送方的速度"><a href="#接收方跟不上发送方的速度" class="headerlink" title="接收方跟不上发送方的速度"></a>接收方跟不上发送方的速度</h2><p>每条TCP的一端都会设置接收缓存，且缓存的大小也有一定限制。当序号正确的包到达后被放进缓存，接收主机并不一定会马上从缓存中取出来交给进程使用，接收方主机也许正忙于其他任务，在某个时候才会去读取缓存。这样缓存就会容易被占满，从而导致溢出。溢出就会丢失，丢失就又得重发，重发了那么多的冗余的包，有可能就导致网络拥塞了，当然还会导致发送方浪费流量。</p>
+<p>TCP提供了一个称为流量控制服务的机制，避免缓存区的溢出。其原理是让发送方能够知道接收缓存的剩余量。发送方会维护一个称为接收窗口的变量rwnd，另外我们定义以下几个变量:</p>
+<ul>
+<li>LastByteRead: 接收方从缓存中读出的数量流的最后一个字节的编号。</li>
+<li>LastByteRcvd: 接收方已经收到的已放进缓冲区的数据流的最后一个字节的编号。</li>
+</ul>
+<p>于是缓冲区的已经使用的大小为: LastByteRcvd - LastByteRead，而我们的接收窗口可以用下面的公式得到:</p>
+<pre><code>rwnd = 缓冲区总大小 - (LastByteRcvd - LastByteRead)
+</code></pre><p>接收方会把当前的rwnd值发回给发送方，以便让发送方知道。而我们的发送方，需要保证已发送但未确认的包的总大小不能大于rwnd，从而避免发送过快而使接收方的缓冲区溢出。</p>
+<p>过程如图:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky6g6doij30rc0oitb9.jpg" alt=""></p>
+<h2 id="双方状态不可知"><a href="#双方状态不可知" class="headerlink" title="双方状态不可知"></a>双方状态不可知</h2><p>这里便利用到了TCP的经典三次握手机制，我们先看下TCP的握手步骤:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky6u1kb1j30mc0pqdhj.jpg" alt=""></p>
+<p>其中第三次握手，已经是可以发送想要发送的数据了，因为连接已经在发送方收到ack之后确认了。</p>
+<p>说到上面的三次握手连接，网上经常流行的比喻性质的解释是:</p>
+<p>A给B打电话的场景:</p>
+<ul>
+<li>A: 你好，B听得到么？</li>
+<li>B: 听得到，那你听得到我么？</li>
+<li>A: 嗯，我也听得到。</li>
+</ul>
+<p>虽然看起来像是开玩笑，但是前面我也说过，计算机中的很多设计，都是来源于生活。在我们现实中，其实有很多像这样的三次确认的交流，而为什么会有三次呢？而不是两次和四次五次？</p>
+<p>拿上面的打电话举例子，双方的连接确认，其实就是希望双方都对彼此的存在做至少一次确认。首先是A的初始部分，他首先传达给B，B收到了，于是他对于A的存在做了一次确认，接下来他需要对自己的存在做一次确认，于是他回复A，这时A听到了B的回复，所以他对自己的存在做了一次确认，且他收到了B的回复，所以他对B的存在也做了一次确认，现在只剩B对自己的存在还没有确认，所以A回复B，这样B对自己的存在也确认了一遍。这套流程下来，A和B都对自己和对方是否存在都做了一遍确认，认定了双方的状态。</p>
+<p>这三次交互代入到TCP中的连接确认，其中双方要确认的就是初始序号，缺任何一次都会导致其中一方能够得到的状态不足够，而多一次又显得浪费，而且毕竟是通过网络传输，多一次就会造成更多的延迟。</p>
+<p>看完了三次挥手，顺便也看下四次挥手:</p>
+<p><img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g7ky71lx69j30l40omabd.jpg" alt=""></p>
+<p>挥手过程可以看到接收方是在自己回复发送方ACK后过了一段时间才发出FIN的，原因是接收方可能在收到FIN时并没有完全准备好关闭连接，所以在稍后会主动发出FIN报文，告知自己的关闭。</p>
+<h2 id="网络发生拥塞"><a href="#网络发生拥塞" class="headerlink" title="网络发生拥塞"></a>网络发生拥塞</h2><p>当网络发生拥塞时，往往伴随着丢包现象的发生，而拥塞直接导致丢包的原因一般是路由器的缓存发生溢出。</p>
+<p>而我们针对网络拥塞，主要考虑两个点，一是如何判断是否出现拥塞？二是在出现拥塞后如何解决(其实更应该说是如何控制发送方式以适应拥塞)？</p>
+<ul>
+<li><p>拥塞判断</p>
+<p>我们在前面介绍流量控制时引出了多个变量，这些变量其实在这里也需要使用，另外在这里会增加一个称为拥塞窗口cwnd的变量，这个变量用来对发送包的速率进行了限制，主要表现在发送方当前未被确认的字节数不能大于cwnd。前面已经有了一个接收窗口rwnd，其目的和这里一样，当有两个限制变量时且需要同时满足，那么可以认为:</p>
+<p>  发送未确认的包的数量 &lt;= min(rwnd,cwnd)</p>
+</li>
+</ul>
+<p>其中cwnd的值的计算有些复杂，将在后面的文字中介绍。</p>
+<p>继续说对于网络拥塞的判断，其实也就是出现丢包，而丢包事件的定义为:出现超时和收到接收方回复的三次冗余ACK。</p>
+<ul>
+<li>在ATM网络体系中的ABR服务模型中，其利用了虚电路类型的网络层和其自有的机制提供了网络层的拥塞提示功能。</li>
+<li>拥塞控制</li>
+</ul>
+<p>出现网络拥塞时，我们需要按照一定的策略来控制发送的频率，而发送频率策略，其本身是贯彻到整个网络交互的生命周期之内的，因为拥塞可能发生在整个交互中的任何时间。大部分TCP的实现中将整个周期内的发送策略定为三个状态:慢启动、拥塞避免和快速恢复，下面逐一来介绍(其中会顺便将拥塞窗口的值的计算策略一起说明)。</p>
+<ul>
+<li><p>慢启动</p>
+<p>  在一条TCP连接刚刚启动时，cwnd通常设为一个MSS(最大数据包大小，不包含报文头部)，这是个比较小的值，所以发送方在一开始的发送速度会十分的缓慢，这也是叫做慢启动的原因。然而在这个(慢启动)状态下，在收到接收方的确认ACK后，这个cwnd变量的增长速度会以指数级的增长，所以完全不用担心前期的启动时速率过慢的问题。</p>
+<p>  TCP还会维护一个称为慢启动阈值的变量ssthresh，ssthresh会被设为cwnd的一半。每当发现拥塞事件，TCP会将cwnd置为1而重新开始慢启动。所以离开慢启动有以下几种情况:</p>
+<ul>
+<li>由于丢包导致重新开始慢启动流程。</li>
+<li>在慢启动状态，当cwnd的值达到ssthresh或超过时，由于之前就是在再次翻倍时发生拥塞，所以这里需要平稳的控制速率，所以这里开始进入拥塞避免状态。</li>
+<li>当检测到三个冗余ACK时，进入快速恢复状态。</li>
+</ul>
+</li>
+<li><p>拥塞避免</p>
+<p>  当进入拥塞避免状态，cwnd的值大约是上次遇到拥塞时的值的一半，这时候当收到正确的接收方ACK后，每次为cwnd增加一个MSS。在此时依然采用慢启动时的指数级增长已经显示不合适了，毕竟网络中刚刚已经出现了拥塞。但是这种线性的增长也不会永远进行下去，当出现拥塞时，会和慢启动时遇到一样，一般将cwnd置为1而重新开始慢启动。但是预测的拥塞可能是由三次冗余的ACK导致的，这种情况只是将cwnd的值减为一半，并且同时更新ssthresh为新的cwnd值的一半，并进入快速恢复状态。</p>
+</li>
+<li><p>快速恢复</p>
+<p>  快速恢复是一种非必须的拥塞控制中所用到的构件，但是被TCP推荐使用，在某些TCP的实现中是不包含的。在进入到快速恢复状态时，对刚刚引起进入状态的每个冗余ACK为cwnd的值加一个MSS，当缺失的ACK到达时，TCP将进入拥塞避免状态。</p>
+</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>从上文中可以看出，维持一个可靠的传输层协议需要考虑到很多因素且过程复杂，可以看出TCP的设计者们付出了大量的精力和经验，得以使得后来者能够基本不用顾虑下层的可靠性而尽情在上层做更多的设计开发，且这些设计还能被我们后辈学习和利用。</p>
+<p>由于这篇文章更侧重于本人记录学习所用，所以难免会有一些错误，希望能够指出从而一起进步，十分感谢阅读！</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p>《计算机网络自顶向下方法》</p>
+<p>《图解TCP/IP》</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+    <div class="article-meta pull-right">
+      <span>
+        <i class="icon-comments"></i>
+        <span>
+          <a href="/2019/10/03/网络学习笔记-TCP/#comment">评论</a>
+        </span>
+      </span>
+    </div>
+    
+  </div>
+</article>
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2018/05/23/稍微了解地址无关代码-Position-independent-Code/"><span>稍微了解地址无关代码(Position-Independent Code)</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2018/05/23/稍微了解地址无关代码-Position-independent-Code/" rel="bookmark">
+        <time class="entry-date published" datetime="2018-05-23T14:44:28.000Z">
+          2018-05-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="地址无关代码-或者说位置独立代码"><a href="#地址无关代码-或者说位置独立代码" class="headerlink" title="地址无关代码(或者说位置独立代码)"></a>地址无关代码(或者说位置独立代码)</h2><h3 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h3><blockquote>
+<p>CPU类型: X86-64 系统环境:CentOS Linux7 工具: GCC v4.8.5</p>
+</blockquote>
+<h2 id="0x1-何为地址无关代码"><a href="#0x1-何为地址无关代码" class="headerlink" title="0x1 何为地址无关代码"></a>0x1 何为地址无关代码</h2><p>地址无关代码，简称PIC，下文中都以PIC代替。</p>
+<p>PIC一般用于动态库文件中，但并不是唯一，所以有时候也会用在可执行文件中。我想大家都知道静态库与动态库的区别，如果没有，我再稍微啰嗦一下:</p>
+<ul>
+<li>静态库</li>
+</ul>
+<p>在代码编译后，链接时对需要的库文件进行静态链接，也就是在生成可执行文件时，对每一份静态库文件都拷贝了一份到可执行文件中。</p>
+<ul>
+<li>动态库</li>
+</ul>
+<p>在代码编译链接生成可执行文件后，装载它到虚拟内存中后，这时候才对动态库进行链接装载，也可能在运行时才进行，它并非合并在可执行文件中。</p>
+<p>关于动态库的好处在下不会多说，因为这并非本文的重点。</p>
+<p>由于动态库文件在磁盘中只存在一份，而为了当被装载到多个进程中时能保证可用，必须绝对不能使用绝对地址进行定位，为什么这么说呢？因为动态库要保证可以被加载进任意地址空间，所以开始地址都是未知的，动态库内部的指令和数据都根本不知道绝对地址会是何处。当然也有人说，可以固定某个区地址区域划分给动态库啊，的确，当只有一个可执行文件需要链接这个动态库时，固定地址是可以解决这个问题的，或者说重定位就可以完成这个需求。但是发明动态库的目的之一就是为了让所有程序在装载或运行时都能使用，而不是单独一个进程使用，所以这是个无聊的说辞。</p>
+<p>因为指令中不允许使用绝对地址，所以就产生了“地址无关代码(PIC)”的解决方案，简而言之就是指令中不会使用任何的绝对地址。至于如何做到不使用绝对地址，下文会详细说道。</p>
+<h2 id="0x2-PIC的实现手段"><a href="#0x2-PIC的实现手段" class="headerlink" title="0x2 PIC的实现手段"></a>0x2 PIC的实现手段</h2><p>由于PIC的做法是让指令部分做到地址无关，所以可以让所有进程共享一份。但是数据部分并不地址无关，而是让所有进程在地址空间中都产生一份副本。</p>
+<p>所以目标就是就是实现指令部分的无关，而指令中可能会包含对内部和外部的函数调用，以及内部和外部的数据访问。所以这样的划分就需要考虑四种情况:</p>
+<p>这里是测试代码，作为下面讨论用:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line"></span><br><span class="line">static int a;</span><br><span class="line">extern int b;</span><br><span class="line">extern void play();</span><br><span class="line"></span><br><span class="line"> void change()&#123;</span><br><span class="line">	a = 1;</span><br><span class="line">	b = 2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static void change2()&#123;</span><br><span class="line">      a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void execute()&#123;</span><br><span class="line">	change();</span><br><span class="line">	play();</span><br><span class="line">	change2();</span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line">我们需要对代码文件进行编译，并通过设置将其生成一个共享对象文件</span><br><span class="line">gcc -fPIC -shared -o lib.so lib.c</span><br></pre></td></tr></table></figure></p>
+<h3 id="0x21-对内部函数的访问"><a href="#0x21-对内部函数的访问" class="headerlink" title="0x21 对内部函数的访问"></a>0x21 对内部函数的访问</h3><p>相对的内部函数其实也有两种情况，有static修饰的 真●内部函数 和 没有static修饰的全局函数。</p>
+<ul>
+<li>真●内部函数(static)</li>
+</ul>
+<p>比如上述代码中的change2，对这种函数的访问是最容易解决的问题，因为一个动态库在编译成一个模块之后，其中的指令之间的相对位置是固定的，所以通过一个相对跳转指令即可访问:<br><img src="https://ws2.sinaimg.cn/large/006tKfTcly1fq6w66pyxuj30v80kaaer.jpg" alt=""></p>
+<ul>
+<li>全局函数</li>
+</ul>
+<p>因为为全局函数，所以要考虑一个叫做全局符号介入的问题，什么是全局符号介入呢？</p>
+<p>在Linux下，当动态链接器加载一个模块时，需要将这个模块的符号加入到全局符号表中，如果某个要加入的符号名已经存在时，也就是此时重复了，这时候会忽略这次的添加操作，以第一次决议的符号为准，未来运行期间访问到这个符号的所有指令，都会使用第一次决议的符号，这时候情况和下面的外部函数情况相同。</p>
+<h3 id="0x22-对内部数据的访问"><a href="#0x22-对内部数据的访问" class="headerlink" title="0x22 对内部数据的访问"></a>0x22 对内部数据的访问</h3><p>在上面的测试代码中，change和change2函数中都对静态变量a进行了操作，我们来看翻译成汇编后的显示:<br><img src="https://ws3.sinaimg.cn/large/006tKfTcly1fqethsu2tsj31jq0i2q7i.jpg" alt=""></p>
+<p>首先我要做一些说明，由于数据的寻址方式并没有相对寻址，所以无法像上述方式一样通过相对寻址拿到那个变量的地址。不过由于在一个共享文件中，每条指令与它内部的变量相对地址是固定的，所以可以通过当前“PC”寄存器的值加上固定的偏移量拿到需要的变量，在x86-64平台的汇编中用%rip寄存器代替熟知的PC寄存器。</p>
+<p>从图中第一个红框中可以看出，当前%rip寄存器保存的是下一条指令的地址”0x753”(因为这是个相对地址，所以用引号扩住)，并且地址加上了0x2008e9,我们可以计算一下这个a对于整个共享文件的相对地址:<br>0x753 + 0x2008e9 = 0x20103c</p>
+<p>这个地址也正好对应了后面注释中的a的地址。</p>
+<h3 id="0x23-对外部数据的访问"><a href="#0x23-对外部数据的访问" class="headerlink" title="0x23 对外部数据的访问"></a>0x23 对外部数据的访问</h3><p>对于外部数据的访问，是通过一个GOT表，此表位于数据段中，所以此表的地址可以利用上面的“对内部数据的访问”方式得到，并且由于位于数据段中，因此拥有可修改的特性。GOT表中的每一项就是对外数据的引用，在未加载到进程空间中，表项都为空，需要在加载时进行填充，那装载器如何知道要填充哪些数据呢？答案是通过动态链接时的重定位表，可以用 objdump -R #file 指令来获取：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tKfTcly1frlma3z17wj30n80ec78h.jpg" alt=""></p>
+<blockquote>
+<p>因为这篇文章中间由于忙别的事隔了很长时间才接着写，系统也被我重装了，所以后面的截图可能颜色主题风格不一样，不用在意。</p>
+</blockquote>
+<p>可以看到表中被匡住的那一项为我们代码中引用的外部符号b，此时它在重定位表中的偏移为0x200fd8.</p>
+<p>我们也看下got表的位置:</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tKfTcly1frlmrcd9vvj30u40ssgsv.jpg" alt=""></p>
+<p>这时候再看反汇编后的代码:<br><img src="https://ws1.sinaimg.cn/large/006tKfTcly1frlmdpgs8hj30vg07gmyo.jpg" alt=""></p>
+<p>可得 0x74a + 0x20088e = 0x200fd8，发现此处偏移量与重定位表b的那一项的偏移量完全一样，因为在got表中八个字节为一项，可以看出b位于第二项。于是在加载到进程空间后，加载器会对符号重定位后得到的地址填充至got表中，当我们再次访问0x200fd8偏移量时，就能得到变量的真正地址。</p>
+<h3 id="0x24-对外部函数的访问"><a href="#0x24-对外部函数的访问" class="headerlink" title="0x24 对外部函数的访问"></a>0x24 对外部函数的访问</h3><p>对外部函数的访问和上面的“对外部数据的访问”类似，原理都一样的，所以多余的计算偏移步骤我就省略了。不同之处是这里的表叫做plt表，偏移位置可以看图:</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tKfTcly1frlmxgfnbyj30u203474q.jpg" alt=""></p>
+<p>不同之处在于其有一个懒式绑定的特点，因为程序启动时需要将所有共享模块加载到进程空间中，此时需要进行动态绑定的符号会非常多，重定位也是耗费性能的，这样也会导致程序的启动时间过长；而且有的函数不一定在运行过程中会调用，所以为了节省性能消耗，采用用时才进行绑定的办法，也就是用的时候再进行符号重定位，动态链接器会接收共享模块ID和需要被重定位的符号作为参数，再通过内部的功能对其plt表项进行填充，此时再次访问plt表项中所对应的地址就可以进行外部函数的调用了。</p>
+<h2 id="0x3-感想"><a href="#0x3-感想" class="headerlink" title="0x3 感想"></a>0x3 感想</h2><p>其实上面的模块之外的数据和函数访问的解决方案，在各种程序编码中经常遇到，这种方案可以很好的实现大部分程序的动态特性，让程序更加的灵活。</p>
+<p>大概就写这么多，唠唠叨叨太多也是鸡肋。笔者水平有限，如果错误之处希望大家能够指正，感谢阅读！</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+    <div class="article-meta pull-right">
+      <span>
+        <i class="icon-comments"></i>
+        <span>
+          <a href="/2018/05/23/稍微了解地址无关代码-Position-independent-Code/#comment">评论</a>
+        </span>
+      </span>
+    </div>
+    
+  </div>
+</article>
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2018/03/28/从零开始的数据交互安全/"><span>从零开始的数据交互安全</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2018/03/28/从零开始的数据交互安全/" rel="bookmark">
+        <time class="entry-date published" datetime="2018-03-28T08:51:54.000Z">
+          2018-03-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p><img src="https://ws1.sinaimg.cn/large/006tNc79ly1fpsmn4eexuj31100hsngm.jpg" alt=""></p>
+<h2 id="从零开始的数据交互安全"><a href="#从零开始的数据交互安全" class="headerlink" title="从零开始的数据交互安全"></a>从零开始的数据交互安全</h2><h3 id="数据交换时为何要考虑安全？"><a href="#数据交换时为何要考虑安全？" class="headerlink" title="数据交换时为何要考虑安全？"></a>数据交换时为何要考虑安全？</h3><p>在我们中华悠久历史中，其实早已有很多数据交互的安全的范例。</p>
+<ul>
+<li>《六韬·龙韬·阴符》 摘自百科</li>
+</ul>
+<p>相传商纣王末年，姜太公辅佐周室，使周族由弱变强。有一次，他们带领的周军指挥大营被叛兵包围，情况危急，姜太公令信使突围，回朝搬兵，他怕信使遗忘机密，又怕周文王不认识信使，耽误军务大事，就将自己珍爱的鱼竿折成数节，每节长短不一，各代表一件军机，令信使牢记，不得外传。信使几经周折回到朝中，周文王令左右将几节鱼竿合在一起，亲自检验，周文王辨认出是姜太公的心爱之物，亲率大军到事发地点，解了姜太公之危。事后，姜太公拿着那几节使他化险为夷，转危为安的鱼竿，妙思如泉涌，他将鱼竿传信的办法加以改进，便发明了“阴符”。</p>
+<ul>
+<li>藏头诗</li>
+</ul>
+<p>除了在古代军事上，其实民间也充满了各种数据交换安全的范例，“藏头诗”便是最令人熟知的一种体现。</p>
+<blockquote>
+<p>平湖一色万顷秋，</p>
+<p>湖光渺渺水长流。</p>
+<p>秋月圆圆世间少，</p>
+<p>月好四时最宜秋。</p>
+</blockquote>
+<p>这首诗的首字连起来便是明朝大学问家徐渭游西湖时面对“平湖秋月”盛景时写出的。</p>
+<p>由上可见，当人们不想让自己希望知道的人以外任何人知道时，就是安全设计的用武之地了。所以说数据交换的安全是个非常有用的技术，不露声色的影响着我们的生活。</p>
+<h3 id="如何才能做到数据的安全交互呢？"><a href="#如何才能做到数据的安全交互呢？" class="headerlink" title="如何才能做到数据的安全交互呢？"></a>如何才能做到数据的安全交互呢？</h3><p>不管是古代还是现代，数据的安全不外乎三个方面:</p>
+<ul>
+<li><p>数据内容的安全性</p>
+</li>
+<li><p>数据内容的完整性</p>
+</li>
+<li><p>交换双方的身份真假</p>
+</li>
+</ul>
+<p>如果保证了这三个方面的正确无误，我们就可以说做到了数据交换的安全。</p>
+<p>接下来可以详细说说这三个方面:</p>
+<h4 id="1-数据内容的安全性"><a href="#1-数据内容的安全性" class="headerlink" title="1. 数据内容的安全性"></a>1. 数据内容的安全性</h4><p>这是数据交互安全设计的首要任务，不然还谈何交换。</p>
+<p>其实前面所说的典故，类似于现代加密方式中的对称加密方式。</p>
+<blockquote>
+<p>Q: 何为对称加密呢？</p>
+</blockquote>
+<p>A: 啥？连对称加密都不知道，自个看书去！</p>
+<blockquote>
+<p>Q: 除了对称加密还有什么加密呢?</p>
+</blockquote>
+<p>A: 还有公私钥方式的加密方式。</p>
+<blockquote>
+<p>Q: 那何为公私钥加密呢?</p>
+</blockquote>
+<p>A:  ……</p>
+<p>简单来说公私钥加密方式就是:</p>
+<p>486要给艾米莉亚碳发送一段数据n，但是不想被蕾姆知道，艾米莉亚自己有两个密钥，一个叫公钥，这个密钥是任何人都知道的，就像认识艾米莉亚的人都知道她的名字，还有一个是私钥，只有艾米莉亚自己知道。镇子上还存在一个加密的算法，大家都知道，然后486用艾米莉亚的公钥和这个公开的加密算法来加密数据n，发给了艾米莉亚，艾米莉亚收到之后，便用自己的私钥和加密算法来加密刚刚收到的密文，这时候得到了便是原始的数据n。</p>
+<blockquote>
+<p>公私钥的加密顺序也是完全可以反着来的，比如说私钥加密，公钥来解密。</p>
+</blockquote>
+<p>读到这里大家应该都知道这两种加密方式了，当然加密算法的选择多种多样，但是有一点必须保证的就是可逆。</p>
+<p>这些便是保证数据内容的安全性方式。</p>
+<h4 id="2-数据内容的完整性"><a href="#2-数据内容的完整性" class="headerlink" title="2. 数据内容的完整性"></a>2. 数据内容的完整性</h4><p>完整性嘛，就是说得保证传过去的数据没有被人篡改，继续开始:</p>
+<p>刚刚486要和艾米莉亚互传数据n了，但是如何保证n传输过程中没有被人改动呢？ 当然有办法，首先，486和艾米莉亚可以互相持有一段密钥，这个密钥非常简单，可以是一个非常小的比特串s，然后还得有个散列函数H，这个散列函数H保证以下规则:</p>
+<blockquote>
+<p>找到任意两个不同的数据x和y，使得H(x) = H(y) 是不可能的。</p>
+</blockquote>
+<p>现在准备工作就做好了，现在486可以将数据n和密钥s进行一些简单的运算(比如按位运算)，然后再将这个运算结果用散列函数H计算，得到一个m码，这时候呢，就把数据n和m码一起发给艾米莉亚。</p>
+<p>艾米理由收到数据后呢，也就是收到了数据n和m码，这时候她可以也将n和共享的密钥s进行运算，再将这个运算结果用散列函数H计算，得到结果，看看这个结果和m码是否相同，如果相同，就代表数据没有中途被篡改了。</p>
+<h4 id="3-交换双方的身份真假"><a href="#3-交换双方的身份真假" class="headerlink" title="3. 交换双方的身份真假"></a>3. 交换双方的身份真假</h4><p>其实从上面说的完整性方案也是顺便鉴定了交换双方的身份真假，因为如果有人冒充486，那艾米莉亚接收到数据后，计算出来的m码肯定是和收到的不一样的。不过我们在这里单独将身份真假鉴别来讲一讲。</p>
+<p>486给艾米莉亚写了一封告白信，但是艾米莉亚不知道是谁写的，刚刚前面说了公私钥加密方式，于是486将用私钥加密这个告白信，然后艾米莉亚肯定知道486的公钥，于是用486的公钥来加密收到的密文，如果得到结果正是这个告白信，那就说明这个告白信确实是486写的。</p>
+<p>说到这里，其实这样就基本形成了一个数据安全交换的流程。虽然肯定是不太成熟的，但是提供了一个整体的思路。</p>
+<h3 id="数据交换安全的用途"><a href="#数据交换安全的用途" class="headerlink" title="数据交换安全的用途"></a>数据交换安全的用途</h3><p>现在来看现代网络信息交互中，几乎无时无刻充满着安全的要求，比如说HTTPS就是最重要的体现。这些安全措施维护着我们的隐私信息安全不被泄露，让我们能更加放心的网上冲浪。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79ly1fpsml61ji7j30vo0ss7wh.jpg" alt=""></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+    <div class="article-meta pull-right">
+      <span>
+        <i class="icon-comments"></i>
+        <span>
+          <a href="/2018/03/28/从零开始的数据交互安全/#comment">评论</a>
+        </span>
+      </span>
+    </div>
+    
+  </div>
+</article>
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2017/12/07/老生常谈category增加属性的几种操作/"><span>老生常谈category增加属性的几种操作</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/12/07/老生常谈category增加属性的几种操作/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-12-07T15:35:15.000Z">
+          2017-12-07
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p> 日常开发中，为一个已有的类(比如说不想影响其文件结构)、第三方库提供的类增加几个property，已经是十分常见且需要的操作了，有人会单独起草一份category.m文件，也有人直接继承，像我一般会用category，一是能减少类文件的数量提高编译速度，二也是为了代码结构更加清晰。</p>
+<p> 这篇文章是用来写Category的进行属性扩展的行为的，所以我还是言归正传，首先，我要阐述一下目前比较主流的几个属性扩展形式，再往下进行分析:</p>
+<ol>
+<li>利用 objc_setAssociatedObject函数进行对象的联合。</li>
+<li>利用 class_addProperty 函数进行类属性的扩展</li>
+<li><p>通过内部创建一个其他对象(比如字典),通过重写本对象set和get或者消息转发。</p>
+<p>下面对这三种常用方法进行分析，其实常见的都是前面两种，第三种也是比较非主流。在分析这三种之前，我要谈一下为什么不能用 class_addIvar 函数。</p>
+</li>
+</ol>
+<ul>
+<li>class_addIvar 函数<blockquote>
+<p>在苹果文档中，对 class_addIvar 函数有下面一段话:</p>
+</blockquote>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">This function may only be called after objc_allocateClassPair(_:_:_:) and before objc_registerClassPair(_:). Adding an instance variable to an existing class is not supported.</span><br><span class="line">The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.</span><br><span class="line"></span><br><span class="line">这个功能只能在 objc_allocateClassPair(_:_:_:) 之后和 objc_registerClassPair(_:) 之前调用。不支持将实例变量添加到现有的类。</span><br><span class="line">该类不能是元类。不支持将实例变量添加到元类。</span><br></pre></td></tr></table></figure>
+<p> 文档是说不能将此函数用于已有的类，必须是动态创建的类，为了能够知道为何会这样，我们需要翻阅一下苹果开源的 runtime 源码。</p>
+<ol>
+<li><p>首先看一下关于 objc_allocateClassPair 函数的代码实现:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">去除干扰代码，我们寻找到下面的函数调用链条:</span><br><span class="line">objc_allocateClassPair -&gt; objc_initializeClassPair_internal</span><br><span class="line"></span><br><span class="line">// 下面的代码已经被我大部分剔除，只留下我们分析所需要用到的代码</span><br><span class="line">static void objc_initializeClassPair_internal(Class superclass, const char *name, Class cls, Class meta)</span><br><span class="line">&#123;</span><br><span class="line">    // Set basic info</span><br><span class="line"></span><br><span class="line">    cls-&gt;data()-&gt;flags = RW_CONSTRUCTING | RW_COPIED_RO | RW_REALIZED | RW_REALIZING;</span><br><span class="line">    meta-&gt;data()-&gt;flags = RW_CONSTRUCTING | RW_COPIED_RO | RW_REALIZED | RW_REALIZING;</span><br><span class="line">    cls-&gt;data()-&gt;version = 0;</span><br><span class="line">    meta-&gt;data()-&gt;version = 7;</span><br><span class="line">    </span><br><span class="line">    // RW_CONSTRUCTING 类已分配但还未注册</span><br><span class="line">    // RW_COPIED_RO class_rw_t-&gt;ro 来自 class_ro_t 结构的复制</span><br><span class="line">    // RW_REALIZED //  class_t-&gt;data 的结构为 class_rw_t</span><br><span class="line">    // RW_REALIZING // 类已开始分配，但并未完成</span><br><span class="line">    // 以上几个宏都是对新类的class_rw_t结构设置基本信息</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>下面是class_addIvar的与我分析所需要的实现代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">// 无关代码已经剔除</span><br><span class="line">BOOL </span><br><span class="line">class_addIvar(Class cls, const char *name, size_t size, </span><br><span class="line">              uint8_t alignment, const char *type)</span><br><span class="line">&#123;</span><br><span class="line">    if (!cls) return NO;</span><br><span class="line"></span><br><span class="line">    if (!type) type = &quot;&quot;;</span><br><span class="line">    if (name  &amp;&amp;  0 == strcmp(name, &quot;&quot;)) name = nil;</span><br><span class="line"></span><br><span class="line">    rwlock_writer_t lock(runtimeLock);</span><br><span class="line"></span><br><span class="line">    assert(cls-&gt;isRealized());</span><br><span class="line"></span><br><span class="line">    // No class variables</span><br><span class="line">    if (cls-&gt;isMetaClass()) &#123;</span><br><span class="line">        return NO;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // Can only add ivars to in-construction classes.</span><br><span class="line">    if (!(cls-&gt;data()-&gt;flags &amp; RW_CONSTRUCTING)) &#123;</span><br><span class="line">        return NO;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">// 重点在这最后一句，前面我们已经看到 objc_allocateClassPair 函数所分配的新类的flags位信息，在此处 &amp; RW_CONSTRUCTING，必定为真，取反后跳过大括号向下执行。</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>已经存在的类，经过测试，flag位为 RW_REALIZED|RW_REALIZING,设置函数如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">static Class realizeClass(Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    runtimeLock.assertWriting();</span><br><span class="line"></span><br><span class="line">    const class_ro_t *ro;</span><br><span class="line">    class_rw_t *rw;</span><br><span class="line">    Class supercls;</span><br><span class="line">    Class metacls;</span><br><span class="line">    bool isMeta;</span><br><span class="line">    </span><br><span class="line">    if (!cls) return nil;</span><br><span class="line">    if (cls-&gt;isRealized()) return cls;</span><br><span class="line">    assert(cls == remapClass(cls));</span><br><span class="line"></span><br><span class="line">    // fixme verify class is not in an un-dlopened part of the shared cache?</span><br><span class="line"></span><br><span class="line">    ro = (const class_ro_t *)cls-&gt;data();</span><br><span class="line">    if (ro-&gt;flags &amp; RO_FUTURE) &#123;</span><br><span class="line">        // This was a future class. rw data is already allocated.</span><br><span class="line">        rw = cls-&gt;data();</span><br><span class="line">        ro = cls-&gt;data()-&gt;ro;</span><br><span class="line">        cls-&gt;changeInfo(RW_REALIZED|RW_REALIZING, RW_FUTURE);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        // Normal class. Allocate writeable class data.</span><br><span class="line">        rw = (class_rw_t *)calloc(sizeof(class_rw_t), 1);</span><br><span class="line">        rw-&gt;ro = ro;</span><br><span class="line">        rw-&gt;flags = RW_REALIZED|RW_REALIZING;</span><br><span class="line">        cls-&gt;setData(rw);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">所以在经过条件 !((RW_REALIZED | RW_REALIZING) &amp; RW_CONSTRUCTING) 时返回NO。</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>以上便是对已有类不能使用 class_addIvar 函数的分析</p>
+<h4 id="好了，回到真正的话题，对上面三种操作的分析"><a href="#好了，回到真正的话题，对上面三种操作的分析" class="headerlink" title="好了，回到真正的话题，对上面三种操作的分析:"></a>好了，回到真正的话题，对上面三种操作的分析:</h4><ul>
+<li>objc_setAssociatedObject <blockquote>
+<p>我们都知道，在category中使用property，可以生成set和get的方法声明，原因在此不做分析，一般为了方便的调用，我们都会写上property，关键在于没有set和get的实现，于是就会有下面这样的代码:</p>
+</blockquote>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">static void *key = &quot;key&quot;;</span><br><span class="line">@implementation Person (Extra)</span><br><span class="line"></span><br><span class="line">// 此处不考虑读写锁的问题</span><br><span class="line">- (void)setName:(NSString *)name&#123;</span><br><span class="line">    objc_setAssociatedObject(self, key, name, OBJC_ASSOCIATION_COPY_NONATOMIC);</span><br><span class="line">&#125;</span><br><span class="line">- (NSString *)name&#123;</span><br><span class="line">    return objc_getAssociatedObject(self, key);</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+<p>上面的 objc_setAssociatedObject 函数内部的调用链条如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">objc_setAssociatedObject -&gt; objc_setAssociatedObject_non_gc -&gt; _object_set_associative_reference</span><br><span class="line"></span><br><span class="line">// 其中主要操作都在 _object_set_associative_reference 函数中，内部实现类似一般属性的set实现(保留新值，释放旧值)，在此我们不进行深究，具体可以参考业内大佬的博客文章。</span><br></pre></td></tr></table></figure>
+<p> 这种操作很直观的表达了我们的需要，且API十分友好，仅仅是对于 weak 策略我们需要自己设计一个。</p>
+<p>并且这种操作的好处是我们无需关系关联对象的声明周期，因为和普通的属性一样，会随着宿主对象的释放而释放,具体可以看以下代码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">dealloc -&gt; _objc_rootDealloc -&gt; rootDealloc -&gt; object_dispose -&gt; objc_destructInstance</span><br><span class="line">// 大部分释放操作在 objc_destructInstance 函数中完成</span><br><span class="line"></span><br><span class="line">// 下面是 objc_destructInstance 函数的实现代码</span><br><span class="line">void *objc_destructInstance(id obj) </span><br><span class="line">&#123;</span><br><span class="line">    if (obj) &#123;</span><br><span class="line">        // Read all of the flags at once for performance.</span><br><span class="line">        bool cxx = obj-&gt;hasCxxDtor();</span><br><span class="line">        bool assoc = !UseGC &amp;&amp; obj-&gt;hasAssociatedObjects();</span><br><span class="line">        bool dealloc = !UseGC;</span><br><span class="line"></span><br><span class="line">        // This order is important.</span><br><span class="line">        // 内部通过C++的析构函数进行对象属性的释放，具体可看sunny大神的博文</span><br><span class="line">        if (cxx) object_cxxDestruct(obj);</span><br><span class="line">        // 此处会移除所有的关联对象，也就是objc_setAssociatedObject 函数所设置上去的对象</span><br><span class="line">        if (assoc) _object_remove_assocations(obj);</span><br><span class="line">        // 清空引用计数与weak表</span><br><span class="line">        if (dealloc) obj-&gt;clearDeallocating();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 当然也有不足之处，利用 objc_setAssociatedObject 生成的关联对象无法直接利用目前主流的Json转Model库(原因是无法在ivar及property中遍历出来)。</p>
+<ul>
+<li>利用 class_addProperty 函数进行类属性的扩展</li>
+</ul>
+<p>class_addProperty 函数可以为我们生成类的property，@property是编译器的标识符，在普通类中可生成property、ivar、setMethod与getMethod，在我看来property的真实作用类似于方法的声明，后面我会再谈为什么。</p>
+<p>在分类中使用class_addProperty和普通类一样， 只能生成set和get方法的声明，无论有没有被实现，我们都可以用 class_copyPropertyList 函数得到property的list，如果这时候你想存储属性值，你依然必须手动或动态实现那些set和get方法，并且真实数据的存储也必须由你自己提供实现，比如可以使用前面所说的objc_setAssociatedObject 函数。</p>
+<p>现在说说为啥property只是一个类似声明的作用呢，我们可以从苹果开源的代码中找到蛛丝马迹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">Class 是一个指向结构体 objc_class 的指针，而此结构体的结构如下所示:</span><br><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;  // 指向父类</span><br><span class="line">    cache_t cache;             // 缓存指针与vtable(没学过C++,没了解过虚函数这些)，加速方法的调用</span><br><span class="line">    class_data_bits_t bits;   // 真正保存对象的ivar，property与method等信息的地方</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    在源码中大部分时候表现为将类的大部分信息保存在 class_rw_t *rw指针中，不过内部也是返回bits中处理后的信息</span><br><span class="line">    </span><br><span class="line">        class_rw_t *data() &#123; </span><br><span class="line">        return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    在class_rw_t的结构中，结构如下所示:</span><br><span class="line">    struct class_rw_t &#123;</span><br><span class="line">    // Be warned that Symbolication knows the layout of this structure.</span><br><span class="line">    uint32_t flags;   // 类的信息标记</span><br><span class="line">    uint32_t version; // 当前运行时版本</span><br><span class="line"></span><br><span class="line">    const class_ro_t *ro;</span><br><span class="line"></span><br><span class="line">    method_array_t methods;</span><br><span class="line">    property_array_t properties;</span><br><span class="line">    protocol_array_t protocols;</span><br><span class="line">    </span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到在class_rw_t的结构中，包含了另一个十分相似的 const class_ro_t <em>ro 成员变量。<br>​<br>这个成员变量为一个不可修改内容的结构体指针，其中存储了类在编译时就已经确定好的ivar、 property、method、protocol等信息，在类的初始化时会通过 methodizeClass 函数将其大部分内容都拷贝到 class_rw_t </em>rw中，其中 ivar 不会被拷贝，这也是前面所说的不能在运行时给已有的类增加 ivar的原因。</p>
+<p>像property、method、protocol都是可以在运行时动态添加的，且存储到 rw 的结构中去。</p>
+<p>好像说的有点跑题了，咱们还是一起看看property到底存储了什么信息:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct property_t &#123;</span><br><span class="line">    const char *name;</span><br><span class="line">    const char *attributes;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以看到，propperty中并没有存储很多信息，只有name和配置的属性，也没有实现函数的地址，所以前面我说property的作用其实和方法的声明是差不多的。</p>
+<p>关于property的好处，也就是在使用网上json转model库时可以被遍历到了，但是如果你没有实现set和get，那依然会导致KVC的crash。</p>
+<ul>
+<li>通过内部创建一个其他对象(比如字典),通过重写本对象set和get或者消息转发。</li>
+</ul>
+<p>最后一种方法，也是比较少用的方式，说起来也比较简单，比如定义一个静态的字典变量，然后通过实现interface中声明的set和get的实现对这个字典变量做存取操作，或者通过消息转发中的 (id)forwardingTargetForSelector:(SEL)aSelector 方法返回这个字典变量，但是要注意本类中没有对转发做过什么事，不然这种方法也是不适用的。</p>
+<h4 id="对上文的总结"><a href="#对上文的总结" class="headerlink" title="对上文的总结"></a>对上文的总结</h4><p>其实刚刚所描述的三种分类策略并不是很严谨，因为其中几种总是会搭配着使用，所以在此也要选择一个比较均衡的策略来实现Category属性的绑定。</p>
+<blockquote>
+<p>建议的策略:</p>
+<ol>
+<li>由于我们肯定会在interface 中提供生的property（由于没有合成实现与ivar，在此称为生的），所以这样对于在外部访问时和普通property相同。</li>
+<li>由于缺乏的是实现以及可以存取的数据量，这里我们可以直接实现这些set与get。</li>
+<li>set与get的实现可以通过 associatedObject 进行对对象的存取操作。</li>
+</ol>
+<p>好处： 这种操作由于提供了生的property，所以在第三方的json转model库遍历property时可以直接遍历到，由于你手动实现了set与get，所以在遍历后的KVC赋值时也能起到作用，保证了和普通成员变量的操作一致性。</p>
+</blockquote>
+<p>估计会有人看完结论后觉得:“ 我本来就是这么写的啊，你写这么多字到头来得出的结论和我平时写的也一样。”是的，我只能略表抱歉啦😏！</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+    <div class="article-meta pull-right">
+      <span>
+        <i class="icon-comments"></i>
+        <span>
+          <a href="/2017/12/07/老生常谈category增加属性的几种操作/#comment">评论</a>
+        </span>
+      </span>
+    </div>
+    
+  </div>
+</article>
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2017/09/30/关于线上检测主线程卡顿的问题/"><span>关于线上检测主线程卡顿的问题</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/09/30/关于线上检测主线程卡顿的问题/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-09-30T07:58:40.000Z">
+          2017-09-30
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>大家好，一年多没有更新文章了，最大的原因我想是不知道该分享些什么，这次是在一个巧合下发现网上经常被人讨论的APP在线上状态如何检测到主线程的卡顿情况，我也稍微了解了一下，前段时间就在一个博主的文章里看到一篇有部分讲解这个问题的，据说美团用的也是这种方案，具体不得而知，然后我发现网上关于这种问题的实现方案都十分类似，如果屏幕前的你还没有意识过这个问题，那就请听我往下分析这个网上常用的检测方案:</p>
+<blockquote>
+<p>利用runloop的检测方案</p>
+</blockquote>
+<p>关于runloop是什么我就不多说了，因为网上有很多关于这个的文章，最推荐的还是YYKit的作者博客上那篇。<br>我要拿出来注意的是 runloop 的状态:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) &#123;</span><br><span class="line">    kCFRunLoopEntry         = (1UL &lt;&lt; 0), // 即将进入Loop</span><br><span class="line">    kCFRunLoopBeforeTimers  = (1UL &lt;&lt; 1), // 即将处理 Timer</span><br><span class="line">    kCFRunLoopBeforeSources = (1UL &lt;&lt; 2), // 即将处理 Source</span><br><span class="line">    kCFRunLoopBeforeWaiting = (1UL &lt;&lt; 5), // 即将进入休眠</span><br><span class="line">    kCFRunLoopAfterWaiting  = (1UL &lt;&lt; 6), // 刚从休眠中唤醒</span><br><span class="line">    kCFRunLoopExit          = (1UL &lt;&lt; 7), // 即将退出Loop</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>网上热议的是利用 kCFRunLoopBeforeSources 和 kCFRunLoopAfterWaiting 这两个状态之间的耗时进行判断是否有太多事件处理导致出现了卡顿，下面直接上代码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">static void runLoopObserverCallBack(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info)</span><br><span class="line">&#123;</span><br><span class="line">    PingConfig *object = (__bridge PingConfig*)info;</span><br><span class="line">    </span><br><span class="line">    // 记录状态值</span><br><span class="line">    object-&gt;activity = activity;</span><br><span class="line"></span><br><span class="line">    // 发送信号</span><br><span class="line">    dispatch_semaphore_t semaphore = object-&gt;semaphore;</span><br><span class="line">    dispatch_semaphore_signal(semaphore);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上面这些是监听runloop的状态而写的回调函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">- (void)registerObserver</span><br><span class="line">&#123;</span><br><span class="line">    PingConfig *config = [PingConfig new];</span><br><span class="line">    // 创建信号</span><br><span class="line">    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);</span><br><span class="line">    config-&gt;semaphore = semaphore;</span><br><span class="line">    </span><br><span class="line">    CFRunLoopObserverContext context = &#123;0,(__bridge void*)config,NULL,NULL&#125;;</span><br><span class="line">    CFRunLoopObserverRef observer = CFRunLoopObserverCreate(kCFAllocatorDefault,</span><br><span class="line">                                                            kCFRunLoopAllActivities,</span><br><span class="line">                                                            YES,</span><br><span class="line">                                                            0,</span><br><span class="line">                                                            &amp;runLoopObserverCallBack,</span><br><span class="line">                                                            &amp;context);</span><br><span class="line">    CFRunLoopAddObserver(CFRunLoopGetMain(), observer, kCFRunLoopCommonModes);</span><br><span class="line">    </span><br><span class="line">    __block uint8_t timeoutCount = 0;</span><br><span class="line"></span><br><span class="line">    // 在子线程监控时长</span><br><span class="line">    dispatch_async(dispatch_get_global_queue(0, 0), ^&#123;</span><br><span class="line"></span><br><span class="line">        </span><br><span class="line">        while (YES)</span><br><span class="line">        &#123;</span><br><span class="line">            // 假定连续5次超时50ms认为卡顿(当然也包含了单次超时250ms)</span><br><span class="line">            long st = dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, 50*NSEC_PER_MSEC));</span><br><span class="line"></span><br><span class="line">            if (st != 0)</span><br><span class="line">            &#123;</span><br><span class="line"></span><br><span class="line">//                NSLog(@&quot;循环中--%ld&quot;,config-&gt;activity);</span><br><span class="line">                if (config-&gt;activity==kCFRunLoopBeforeSources || config-&gt;activity==kCFRunLoopAfterWaiting)</span><br><span class="line">                &#123;</span><br><span class="line">                    if (++timeoutCount &lt; 5)&#123;</span><br><span class="line">                        continue;</span><br><span class="line">                    &#125;else&#123;</span><br><span class="line">                        NSLog(@&quot;卡顿了&quot;);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line"> </span><br><span class="line">            &#125;</span><br><span class="line">            timeoutCount = 0;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在我解读一下这段代码:</p>
+<ol>
+<li>PingConfig 只是我随便写的一个用来存储runloop的状态和信号量的自定义类，其中的结构如下:<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@interface PingConfig : NSObject</span><br><span class="line">&#123;</span><br><span class="line">    @public</span><br><span class="line">    CFRunLoopActivity activity;</span><br><span class="line">    dispatch_semaphore_t semaphore;</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>恩，只有这么多足矣。</p>
+<ol>
+<li>APP启动时我可以进入 registerObserver 方法，其中首先我创建一个记录信息的类PingConfig实例，然后创建一个信号，并且保存在这个PingConfig实例中(其实只是为了方便拿到)。</li>
+<li>接下来我创建了一个观察者监测主线程的 runloop,它会在主线程runloop状态切换时进行回调。</li>
+<li>开启一个子线程，并且在里面进行一个 while 循环，在 循环的开始处 wait 一个信号量，并且设置超时为 50毫秒，失败后会返回一个非0数，成功将会返回0，这时候线程会阻塞住等待一个信号的发出。</li>
+<li>如果runloop状态正常切换，那么就会进入回调函数，在回调函数中我们发出一个信号，并且记录当前状态到PingConfig实例中，下面的判断语句中发现为0，timeoutCount自动置为0，一切正常。</li>
+<li>当主线程出现卡顿，while循环中的信号量再次等待，但是回调函数没有触发，从而导致等待超时，返回一个非0数，进入判断句后，我们再次判断状态是否处于 kCFRunLoopBeforeSources 或 kCFRunLoopAfterWaiting，如果成立，timeoutCount+1。</li>
+<li>持续五次runloop不切换状态，说明runloop正在处理某个棘手的事件无法休息且不更新状态，这样while循环中的信号量超时会一直发生，超过五次后我们将断定主线程的卡顿并上传堆栈信息。</li>
+</ol>
+<p>经过测试，的确可以检测到主线程的卡顿现象，不得不佩服大佬们的方案。<br>但是在一次测试中，发现当主线程卡在界面尚未完全显示前，这个方案就检测不出来卡顿了，比如我将下面的代码放在B控制器中:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">dispatch_semaphore_t t = dispatch_semaphore_create(0);</span><br><span class="line">dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^&#123;</span><br><span class="line">    NSLog(@&quot;----&quot;);</span><br><span class="line">    dispatch_semaphore_signal(t);</span><br><span class="line">&#125;);</span><br><span class="line">dispatch_semaphore_wait(t, DISPATCH_TIME_FOREVER);</span><br></pre></td></tr></table></figure></p>
+<p>上面是一段有问题的代码，将导致主线程的持续堵塞，如果我们在这段代码放在B控制器的ViewDidLoad方法中(ViewWillAppear同样)，这样运行后，当你希望push到B控制器时，项目将在上一个界面完全卡住，并且无法用上面的方案检测到，而且CPU及内存都显示正常:</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1336067-12058a76334f6d36.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="QQ20170930-153549@2x.png"></p>
+<p>具体原因我想了一下，由于runloop在处理完source0或者source1后，比如界面的跳转也是执行了方法，具体有没有用到source0这不重要，但是后面会紧接着进入准备睡眠(kCFRunLoopBeforeWaiting)的状态，然而此时线程的阻塞导致runloop的状态也被卡住无法切换，这样也就导致在那段检测代码中无法进入条件，从而检测不出来。<br>但是话说回来，APP在静止状态(保持休眠)和刚刚那种卡死状态都会使runloop维持在 kCFRunLoopBeforeWaiting状态，这样我们就无法在那段代码中增加判断来修复，因为无法知道到底是真的静止没有操作还是被阻塞住，我也没找到线程的阻塞状态属性，如果你发现这个属性，那么就可以使用那个属性来判断。但是我也得说下在没找到那个属性时我的检测方案：</p>
+<blockquote>
+<p>我的检测方案</p>
+</blockquote>
+<p>先上代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">dispatch_queue_t serialQueue = dispatch_queue_create(&quot;serial&quot;, DISPATCH_QUEUE_SERIAL);</span><br><span class="line">self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, serialQueue);</span><br><span class="line">dispatch_source_set_timer(self.timer, DISPATCH_TIME_NOW, 0.25 * NSEC_PER_SEC, 0);</span><br><span class="line"></span><br><span class="line">__block int8_t chokeCount = 0;</span><br><span class="line">dispatch_semaphore_t t2 = dispatch_semaphore_create(0);</span><br><span class="line">dispatch_source_set_event_handler(self.timer, ^&#123;</span><br><span class="line">    if (config-&gt;activity == kCFRunLoopBeforeWaiting) &#123;</span><br><span class="line">        static BOOL ex = YES;</span><br><span class="line">        if (ex == NO) &#123;</span><br><span class="line">            chokeCount ++;</span><br><span class="line">            if (chokeCount &gt; 40) &#123;</span><br><span class="line">                NSLog(@&quot;差不多卡死了&quot;);</span><br><span class="line">                dispatch_suspend(self.timer);</span><br><span class="line">                return ;</span><br><span class="line">            &#125;</span><br><span class="line">            NSLog(@&quot;卡顿了&quot;);</span><br><span class="line">            return ;</span><br><span class="line">        &#125;</span><br><span class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</span><br><span class="line">            ex = YES;</span><br><span class="line">            dispatch_semaphore_signal(t2);</span><br><span class="line">        &#125;);</span><br><span class="line">        BOOL su = dispatch_semaphore_wait(t2, dispatch_time(DISPATCH_TIME_NOW, 50*NSEC_PER_MSEC));</span><br><span class="line">        if (su != 0) &#123;</span><br><span class="line">            ex = NO;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line">dispatch_resume(self.timer);</span><br></pre></td></tr></table></figure></p>
+<p>解释一下我的方案:</p>
+<ol>
+<li>开启一个异步队列，并且创建一个定时器，时间我设置的是0.25秒，具体时间随你自己，这个时间是用来检测卡死的持续时间。</li>
+<li>在定时器外面我也同样创建了一个用来同步的信号量，这个不解释了，不会的就去看一下信号量的使用方式。进入定时器的回调后，我设置了一个静态变量来记录主队列是否执行完成。</li>
+<li>我们判断当前runloop的状态是否为kCFRunLoopBeforeWaiting，所以这个方案是用来弥补前面那个方案，如果主线程此时没有阻塞住，我们在这里向main Queue抛一个block，看它是否能够成功执行，如果成功执行，说明主线程没有阻塞住，如果已经被阻塞住，那我抛过去的block是肯定不会被执行的。</li>
+<li>下面的代码就是一些辅助操作，当信号量超过50毫秒，抛给主线程的block没有执行，那么说明此时就有一些阻塞了，返回一个非0数，并设置 ex为NO，从而在下一次定时器回调到来时进行上报。</li>
+</ol>
+<p>我写的这段解决方案中的示例代码只是用来演示，具体是原理可以大家尽情在此基础上优化，目前在我的项目中可以正常检测到之前那种阻塞造成的APP卡死现象，如果你发现有更好的检测方案，希望能告诉我，谢谢！</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+    <div class="article-meta pull-right">
+      <span>
+        <i class="icon-comments"></i>
+        <span>
+          <a href="/2017/09/30/关于线上检测主线程卡顿的问题/#comment">评论</a>
+        </span>
+      </span>
+    </div>
+    
+  </div>
+</article>
+
+
+
+<nav class="pagination">
+  
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2019 John Doe
+    
+  </p>
+</footer>
+    
+  </div>
+</div>
+</body>
+</html>
